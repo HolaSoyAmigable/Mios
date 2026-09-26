@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -51,4 +52,29 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // Media3 (reproducción de audio)
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
+    implementation("androidx.media3:media3-common:1.4.1")
+    implementation("androidx.media3:media3-session:1.4.1")
+
+    // Room (base de datos)
+    implementation("androidx.room:room-runtime:2.7.1")
+    implementation("androidx.room:room-ktx:2.7.1")
+    ksp("androidx.room:room-compiler:2.7.1")
+
+    // ViewModel en Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+
+    // Navegación
+    implementation("androidx.navigation:navigation-compose:2.8.0")
+
+    // Portadas / imágenes
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Íconos extendidos de Material
+    implementation("androidx.compose.material:material-icons-extended:1.7.0")
+
+    // Requerido por MediaController (Media3 Session)
+    implementation("com.google.guava:guava:33.2.1-android")
 }
