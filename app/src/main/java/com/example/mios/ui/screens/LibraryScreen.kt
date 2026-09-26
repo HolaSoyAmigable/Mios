@@ -24,6 +24,13 @@ fun LibraryScreen(navController: NavHostController, viewModel: LibraryViewModel)
             Text("Importar Nueva Canción")
         }
 
+        Button(
+            onClick = { navController.navigate(Screen.Genres.route) },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        ) {
+            Text("Ver Géneros")
+        }
+
         if (songs.isEmpty()) {
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -41,44 +48,6 @@ fun LibraryScreen(navController: NavHostController, viewModel: LibraryViewModel)
                     )
                     HorizontalDivider()
                 }
-            }
-        }
-
-        val currentSong by viewModel.currentSong.collectAsState()
-        if (currentSong != null) {
-            PlayerControls(
-                viewModel = viewModel,
-                onExpand = { navController.navigate(Screen.Player.route) }
-            )
-        }
-    }
-}
-
-@Composable
-fun PlayerControls(viewModel: LibraryViewModel, onExpand: () -> Unit) {
-    val isPlaying by viewModel.isPlaying.collectAsState()
-    val position by viewModel.currentPosition.collectAsState()
-    val duration by viewModel.duration.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onExpand() }
-            .padding(16.dp)
-    ) {
-        Slider(
-            value = if (duration > 0) position.toFloat() / duration.toFloat() else 0f,
-            onValueChange = { fraction ->
-                viewModel.seekTo((fraction * duration).toLong())
-            }
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            IconButton(onClick = { viewModel.togglePlayPause() }) {
-                Text(if (isPlaying) "Pausar" else "Reproducir")
             }
         }
     }

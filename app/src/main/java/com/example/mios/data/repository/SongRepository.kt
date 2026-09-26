@@ -20,6 +20,8 @@ class SongRepository(private val context: Context) {
 
     fun getCatalogedSongs(): Flow<List<SongEntity>> = songDao.getAllSongs()
 
+    fun getSongsByGenre(genre: String): Flow<List<SongEntity>> = songDao.getSongsByGenre(genre)
+
     suspend fun getUnimportedSongs(): List<MediaStoreSong> {
         val allDeviceSongs = readFromMediaStore()
         val importedIds = allDeviceSongs.mapNotNull { deviceSong ->
