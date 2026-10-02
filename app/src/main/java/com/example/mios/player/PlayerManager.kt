@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
@@ -23,8 +24,20 @@ class PlayerManager(private val context: Context) {
     private val _duration = MutableStateFlow(0L)
     val duration: StateFlow<Long> = _duration
 
-    private val _isRepeatEnabled = MutableStateFlow(false)
-    val isRepeatEnabled: StateFlow<Boolean> = _isRepeatEnabled
+    private val _isRepeatOneEnabled = MutableStateFlow(false)
+    val isRepeatOneEnabled: StateFlow<Boolean> = _isRepeatOneEnabled
+
+    private val _isRepeatAllEnabled = MutableStateFlow(false)
+    val isRepeatAllEnabled: StateFlow<Boolean> = _isRepeatAllEnabled
+
+    private val _currentIndex = MutableStateFlow(0)
+    val currentIndex: StateFlow<Int> = _currentIndex
+
+    private val _hasNext = MutableStateFlow(false)
+    val hasNext: StateFlow<Boolean> = _hasNext
+
+    private val _hasPrevious = MutableStateFlow(false)
+    val hasPrevious: StateFlow<Boolean> = _hasPrevious
 
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -35,6 +48,22 @@ class PlayerManager(private val context: Context) {
             if (playbackState == Player.STATE_READY) {
                 _duration.value = controller?.duration?.coerceAtLeast(0L) ?: 0L
             }
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            updateIndexAndNav()
+        }
+
+        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+            updateIndexAndNav()
+        }
+    }
+
+    private fun updateIndexAndNav() {
+        controller?.let {
+            _currentIndex.value = it.currentMediaItemIndex
+            _hasNext.value = it.hasNextMediaItem()
+            _hasPrevious.value = it.hasPreviousMediaItem()
         }
     }
 
@@ -48,10 +77,14 @@ class PlayerManager(private val context: Context) {
         }, MoreExecutors.directExecutor())
     }
 
-    fun playSong(songId: Long) {
-        val uri = "content://media/external/audio/media/$songId"
-        val mediaItem = MediaItem.fromUri(uri)
-        controller?.setMediaItem(mediaItem)
+    fun playQueue(mediaStoreIds: List<Long>, startIndex: Int = 0) {
+        val mediaItems = mediaStoreIds.map { id ->
+            MediaItem.Builder()
+                .setMediaId(id.toString())
+                .setUri("content://media/external/audio/media/$id")
+                .build()
+        }
+        controller?.setMediaItems(mediaItems, startIndex, 0L)
         controller?.prepare()
         controller?.play()
     }
@@ -62,15 +95,29 @@ class PlayerManager(private val context: Context) {
         }
     }
 
-    fun toggleRepeat() {
+    fun next() {
+        controller?.seekToNextMediaItem()
+    }
+
+    fun previous() {
+        controller?.seekToPreviousMediaItem()
+    }
+
+    fun toggleRepeatOne() {
         controller?.let {
-            val newMode = if (it.repeatMode == Player.REPEAT_MODE_ONE) {
-                Player.REPEAT_MODE_OFF
-            } else {
-                Player.REPEAT_MODE_ONE
-            }
+            val newMode = if (it.repeatMode == Player.REPEAT_MODE_ONE) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
             it.repeatMode = newMode
-            _isRepeatEnabled.value = newMode == Player.REPEAT_MODE_ONE
+            _isRepeatOneEnabled.value = newMode == Player.REPEAT_MODE_ONE
+            _isRepeatAllEnabled.value = false
+        }
+    }
+
+    fun toggleRepeatAll() {
+        controller?.let {
+            val newMode = if (it.repeatMode == Player.REPEAT_MODE_ALL) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ALL
+            it.repeatMode = newMode
+            _isRepeatAllEnabled.value = newMode == Player.REPEAT_MODE_ALL
+            _isRepeatOneEnabled.value = false
         }
     }
 

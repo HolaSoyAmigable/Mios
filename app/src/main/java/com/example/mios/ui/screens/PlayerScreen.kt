@@ -25,7 +25,10 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
     val context = LocalContext.current
     val currentSong by viewModel.currentSong.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
-    val isRepeatEnabled by viewModel.isRepeatEnabled.collectAsState()
+    val isRepeatOneEnabled by viewModel.isRepeatOneEnabled.collectAsState()
+    val hasNext by viewModel.hasNext.collectAsState()
+    val hasPrevious by viewModel.hasPrevious.collectAsState()
+    val currentPlaylistId by viewModel.currentPlaylistId.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var albumArt by remember { mutableStateOf<Bitmap?>(null) }
 
@@ -99,7 +102,7 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            IconButton(onClick = { }, enabled = false) {
+            IconButton(onClick = { viewModel.playPrevious() }, enabled = hasPrevious) {
                 Icon(Icons.Default.SkipPrevious, contentDescription = "Anterior")
             }
             IconButton(onClick = { viewModel.togglePlayPause() }) {
@@ -108,7 +111,7 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
                     contentDescription = "Reproducir/Pausar"
                 )
             }
-            IconButton(onClick = { }, enabled = false) {
+            IconButton(onClick = { viewModel.playNext() }, enabled = hasNext) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Siguiente")
             }
         }
@@ -119,11 +122,11 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = { viewModel.toggleRepeat() }) {
+            IconButton(onClick = { viewModel.toggleRepeatOne() }) {
                 Icon(
                     Icons.Default.Repeat,
                     contentDescription = "Repetir",
-                    tint = if (isRepeatEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                    tint = if (isRepeatOneEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current
                 )
             }
             IconButton(onClick = { }, enabled = false) {
@@ -136,19 +139,28 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Borrar canción") },
-            text = { Text("Esta canción se eliminará de tu biblioteca. Los archivos originales del celular no se tocan.") },
+            text = { Text("¿Qué quieres hacer con esta canción?") },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteSong(song)
+                    viewModel.deleteSongFromLibrary(song)
                     showDeleteDialog = false
                     navController.popBackStack()
                 }) {
-                    Text("Borrar")
+                    Text("Borrar de toda la app")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancelar")
+                if (currentPlaylistId != null) {
+                    TextButton(onClick = {
+                        showDeleteDialog = false
+                        navController.popBackStack()
+                    }) {
+                        Text("Quitar solo de la playlist")
+                    }
+                } else {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Cancelar")
+                    }
                 }
             }
         )

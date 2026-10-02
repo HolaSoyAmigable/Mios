@@ -8,5 +8,6 @@ import androidx.room.Entity
 )
 data class PlaylistSongCrossRef(
     val playlistId: Long,
-    val songId: Long
+    val songId: Long,
+    val position: Int
 )

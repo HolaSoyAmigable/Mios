@@ -1,8 +1,8 @@
 package com.example.mios.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,7 +21,8 @@ import com.example.mios.ui.screens.LibraryScreen
 import com.example.mios.ui.screens.LibraryViewModel
 import com.example.mios.ui.screens.PlayerControls
 import com.example.mios.ui.screens.PlayerScreen
-import androidx.compose.foundation.layout.padding
+import com.example.mios.ui.screens.PlaylistDetailScreen
+import com.example.mios.ui.screens.PlaylistsScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController()) {
@@ -42,9 +43,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
         NavHost(
             navController = navController,
             startDestination = Screen.Library.route,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
             composable(Screen.Library.route) {
                 LibraryScreen(navController = navController, viewModel = sharedViewModel)
@@ -70,10 +69,18 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 )
             }
             composable(Screen.Playlists.route) {
-                Text("Playlists — pendiente")
+                PlaylistsScreen(navController = navController)
             }
-            composable(Screen.Settings.route) {
-                Text("Configuración — pendiente")
+            composable(
+                route = Screen.PlaylistDetail.route,
+                arguments = listOf(navArgument("playlistId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val playlistId = backStackEntry.arguments?.getLong("playlistId") ?: 0L
+                PlaylistDetailScreen(
+                    navController = navController,
+                    playlistId = playlistId,
+                    libraryViewModel = sharedViewModel
+                )
             }
         }
     }
