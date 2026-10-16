@@ -3,7 +3,6 @@ package com.example.mios.ui.screens
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.mios.player.AlbumArtUtil
+import com.example.mios.util.toTimeString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -26,22 +26,27 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
     val currentSong by viewModel.currentSong.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
     val isRepeatOneEnabled by viewModel.isRepeatOneEnabled.collectAsState()
+    val isShuffleEnabled by viewModel.isShuffleEnabled.collectAsState()
     val hasNext by viewModel.hasNext.collectAsState()
     val hasPrevious by viewModel.hasPrevious.collectAsState()
     val currentPlaylistId by viewModel.currentPlaylistId.collectAsState()
+    val position by viewModel.currentPosition.collectAsState()
+    val duration by viewModel.duration.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var albumArt by remember { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(currentSong?.mediaStoreId) {
-        currentSong?.let { song ->
-            albumArt = withContext(Dispatchers.IO) {
-                AlbumArtUtil.getEmbeddedArt(context, song.mediaStoreId)
-            }
+        val id = currentSong?.mediaStoreId
+        albumArt = if (id != null) {
+            withContext(Dispatchers.IO) { AlbumArtUtil.getEmbeddedArt(context, id) }
+        } else {
+            null
         }
     }
 
-    val song = currentSong ?: run {
-        navController.popBackStack()
+    val song = currentSong
+    if (song == null) {
+        LaunchedEffect(Unit) { navController.popBackStack() }
         return
     }
 
@@ -87,7 +92,7 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(song.title, style = MaterialTheme.typography.titleLarge)
                 Text(song.genre, style = MaterialTheme.typography.bodyMedium)
             }
@@ -96,7 +101,23 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Slider(
+            value = if (duration > 0) (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f) else 0f,
+            onValueChange = { fraction ->
+                viewModel.seekTo((fraction * duration).toLong())
+            }
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(position.toTimeString(), style = MaterialTheme.typography.bodySmall)
+            Text(duration.toTimeString(), style = MaterialTheme.typography.bodySmall)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -125,12 +146,16 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
             IconButton(onClick = { viewModel.toggleRepeatOne() }) {
                 Icon(
                     Icons.Default.Repeat,
-                    contentDescription = "Repetir",
+                    contentDescription = "Repetir canción",
                     tint = if (isRepeatOneEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current
                 )
             }
-            IconButton(onClick = { }, enabled = false) {
-                Icon(Icons.Default.Shuffle, contentDescription = "Aleatorio")
+            IconButton(onClick = { viewModel.toggleShuffle() }) {
+                Icon(
+                    Icons.Default.Shuffle,
+                    contentDescription = "Aleatorio",
+                    tint = if (isShuffleEnabled) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                )
             }
         }
     }
@@ -139,28 +164,29 @@ fun PlayerScreen(navController: NavHostController, viewModel: LibraryViewModel) 
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Borrar canción") },
-            text = { Text("¿Qué quieres hacer con esta canción?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteSongFromLibrary(song)
-                    showDeleteDialog = false
-                    navController.popBackStack()
-                }) {
-                    Text("Borrar de toda la app")
+            text = {
+                Column {
+                    Text("¿Qué quieres hacer con esta canción? Los archivos originales del celular no se tocan.")
+                    if (currentPlaylistId != null) {
+                        TextButton(onClick = {
+                            viewModel.removeCurrentSongFromPlaylist()
+                            showDeleteDialog = false
+                        }) {
+                            Text("Quitar solo de la playlist")
+                        }
+                    }
+                    TextButton(onClick = {
+                        viewModel.deleteCurrentSongFromLibrary()
+                        showDeleteDialog = false
+                    }) {
+                        Text("Borrar de toda la app", color = MaterialTheme.colorScheme.error)
+                    }
                 }
             },
+            confirmButton = {},
             dismissButton = {
-                if (currentPlaylistId != null) {
-                    TextButton(onClick = {
-                        showDeleteDialog = false
-                        navController.popBackStack()
-                    }) {
-                        Text("Quitar solo de la playlist")
-                    }
-                } else {
-                    TextButton(onClick = { showDeleteDialog = false }) {
-                        Text("Cancelar")
-                    }
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancelar")
                 }
             }
         )

@@ -30,6 +30,9 @@ class PlayerManager(private val context: Context) {
     private val _isRepeatAllEnabled = MutableStateFlow(false)
     val isRepeatAllEnabled: StateFlow<Boolean> = _isRepeatAllEnabled
 
+    private val _isShuffleEnabled = MutableStateFlow(false)
+    val isShuffleEnabled: StateFlow<Boolean> = _isShuffleEnabled
+
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex
 
@@ -55,6 +58,17 @@ class PlayerManager(private val context: Context) {
         }
 
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+            updateIndexAndNav()
+        }
+
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+            _isShuffleEnabled.value = shuffleModeEnabled
+            updateIndexAndNav()
+        }
+
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            _isRepeatOneEnabled.value = repeatMode == Player.REPEAT_MODE_ONE
+            _isRepeatAllEnabled.value = repeatMode == Player.REPEAT_MODE_ALL
             updateIndexAndNav()
         }
     }
@@ -89,6 +103,10 @@ class PlayerManager(private val context: Context) {
         controller?.play()
     }
 
+    fun removeItemAt(index: Int) {
+        controller?.removeMediaItem(index)
+    }
+
     fun togglePlayPause() {
         controller?.let {
             if (it.isPlaying) it.pause() else it.play()
@@ -121,12 +139,20 @@ class PlayerManager(private val context: Context) {
         }
     }
 
+    fun toggleShuffle() {
+        controller?.let {
+            it.shuffleModeEnabled = !it.shuffleModeEnabled
+            _isShuffleEnabled.value = it.shuffleModeEnabled
+        }
+    }
+
     fun seekTo(positionMs: Long) {
         controller?.seekTo(positionMs)
     }
 
     fun updatePosition() {
         _currentPosition.value = controller?.currentPosition?.coerceAtLeast(0L) ?: 0L
+        _duration.value = controller?.duration?.coerceAtLeast(0L) ?: 0L
     }
 
     fun release() {

@@ -19,7 +19,7 @@ class PlaylistRepository(context: Context) {
     }
 
     suspend fun addSongToPlaylist(playlistId: Long, songId: Long) {
-        val position = playlistDao.countSongsInPlaylist(playlistId)
+        val position = playlistDao.getMaxPosition(playlistId) + 1
         playlistDao.addSongToPlaylist(PlaylistSongCrossRef(playlistId, songId, position))
     }
 

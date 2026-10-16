@@ -21,8 +21,11 @@ interface PlaylistDao {
     @Query("DELETE FROM playlist_song_crossref WHERE playlistId = :playlistId AND songId = :songId")
     suspend fun removeSongFromPlaylist(playlistId: Long, songId: Long)
 
-    @Query("SELECT COUNT(*) FROM playlist_song_crossref WHERE playlistId = :playlistId")
-    suspend fun countSongsInPlaylist(playlistId: Long): Int
+    @Query("DELETE FROM playlist_song_crossref WHERE songId = :songId")
+    suspend fun removeSongFromAllPlaylists(songId: Long)
+
+    @Query("SELECT COALESCE(MAX(position), -1) FROM playlist_song_crossref WHERE playlistId = :playlistId")
+    suspend fun getMaxPosition(playlistId: Long): Int
 
     @Query("""
         SELECT songs.* FROM songs

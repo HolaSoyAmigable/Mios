@@ -16,7 +16,9 @@ data class MediaStoreSong(
 
 class SongRepository(private val context: Context) {
 
-    private val songDao = AppDatabase.getDatabase(context).songDao()
+    private val database = AppDatabase.getDatabase(context)
+    private val songDao = database.songDao()
+    private val playlistDao = database.playlistDao()
 
     fun getCatalogedSongs(): Flow<List<SongEntity>> = songDao.getAllSongs()
 
@@ -46,6 +48,7 @@ class SongRepository(private val context: Context) {
     }
 
     suspend fun deleteSong(song: SongEntity) {
+        playlistDao.removeSongFromAllPlaylists(song.id)
         songDao.deleteSong(song)
     }
 

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mios.data.database.Song
+import com.example.mios.data.repository.PlaylistRepository
 import com.example.mios.data.repository.SongRepository
 import com.example.mios.player.PlayerManager
 import kotlinx.coroutines.delay
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = SongRepository(application)
+    private val playlistRepository = PlaylistRepository(application)
     private val playerManager = PlayerManager(application)
 
     val songs: StateFlow<List<Song>> = repository.getCatalogedSongs()
@@ -32,6 +34,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     val duration: StateFlow<Long> = playerManager.duration
     val isRepeatOneEnabled: StateFlow<Boolean> = playerManager.isRepeatOneEnabled
     val isRepeatAllEnabled: StateFlow<Boolean> = playerManager.isRepeatAllEnabled
+    val isShuffleEnabled: StateFlow<Boolean> = playerManager.isShuffleEnabled
     val hasNext: StateFlow<Boolean> = playerManager.hasNext
     val hasPrevious: StateFlow<Boolean> = playerManager.hasPrevious
 
@@ -50,12 +53,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun playSong(song: Song) {
-        _queue.value = listOf(song)
+    // Reproduce una lista (Biblioteca, género...) empezando en startIndex
+    fun playList(songsList: List<Song>, startIndex: Int) {
+        if (songsList.isEmpty()) return
+        _queue.value = songsList
         _currentPlaylistId.value = null
-        playerManager.playQueue(listOf(song.mediaStoreId), 0)
+        playerManager.playQueue(songsList.map { it.mediaStoreId }, startIndex)
     }
 
+    // Reproduce una playlist personalizada
     fun playPlaylist(songsList: List<Song>, startIndex: Int, playlistId: Long) {
         if (songsList.isEmpty()) return
         _queue.value = songsList
@@ -68,12 +74,35 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun togglePlayPause() = playerManager.togglePlayPause()
     fun toggleRepeatOne() = playerManager.toggleRepeatOne()
     fun toggleRepeatAll() = playerManager.toggleRepeatAll()
+    fun toggleShuffle() = playerManager.toggleShuffle()
     fun seekTo(positionMs: Long) = playerManager.seekTo(positionMs)
 
-    fun deleteSongFromLibrary(song: Song) {
+    private fun currentQueueSong(): Song? = _queue.value.getOrNull(playerManager.currentIndex.value)
+
+    private fun removeFromQueueAt(index: Int) {
+        playerManager.removeItemAt(index)
+        _queue.value = _queue.value.toMutableList().also {
+            if (index in it.indices) it.removeAt(index)
+        }
+    }
+
+    fun removeCurrentSongFromPlaylist() {
+        val playlistId = _currentPlaylistId.value ?: return
+        val song = currentQueueSong() ?: return
+        val index = playerManager.currentIndex.value
+        viewModelScope.launch {
+            playlistRepository.removeSongFromPlaylist(playlistId, song.id)
+        }
+        removeFromQueueAt(index)
+    }
+
+    fun deleteCurrentSongFromLibrary() {
+        val song = currentQueueSong() ?: return
+        val index = playerManager.currentIndex.value
         viewModelScope.launch {
             repository.deleteSong(song)
         }
+        removeFromQueueAt(index)
     }
 
     override fun onCleared() {
