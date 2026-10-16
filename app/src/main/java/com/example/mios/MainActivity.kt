@@ -7,7 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.mios.navigation.AppNavigation
+import com.example.mios.navigation.AppRoot
 import com.example.mios.ui.theme.MiosTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MiosTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AppNavigation()
+                    AppRoot()
                 }
             }
         }

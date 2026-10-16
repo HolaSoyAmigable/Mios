@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,11 +18,28 @@ import com.example.mios.data.database.Song
 import com.example.mios.navigation.Screen
 
 @Composable
-fun LibraryScreen(navController: NavHostController, viewModel: LibraryViewModel) {
+fun LibraryScreen(
+    navController: NavHostController,
+    viewModel: LibraryViewModel,
+    username: String
+) {
     val songs by viewModel.songs.collectAsState()
     var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                Icon(Icons.Default.Settings, contentDescription = "Configuración")
+            }
+            Text(
+                text = username.ifBlank { "Usuario" },
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+
         Button(
             onClick = { navController.navigate(Screen.Import.route) },
             modifier = Modifier.fillMaxWidth().padding(16.dp)

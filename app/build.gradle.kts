@@ -77,4 +77,7 @@ dependencies {
 
     // Requerido por MediaController (Media3 Session)
     implementation("com.google.guava:guava:33.2.1-android")
+
+    // DataStore (preferencias)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 }

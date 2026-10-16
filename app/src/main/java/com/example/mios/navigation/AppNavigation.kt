@@ -23,11 +23,17 @@ import com.example.mios.ui.screens.PlayerControls
 import com.example.mios.ui.screens.PlayerScreen
 import com.example.mios.ui.screens.PlaylistDetailScreen
 import com.example.mios.ui.screens.PlaylistsScreen
+import com.example.mios.ui.screens.SettingsScreen
+import com.example.mios.ui.screens.SettingsViewModel
 
 @Composable
-fun AppNavigation(navController: NavHostController = rememberNavController()) {
+fun AppNavigation(
+    settingsViewModel: SettingsViewModel,
+    navController: NavHostController = rememberNavController()
+) {
     val sharedViewModel: LibraryViewModel = viewModel()
     val currentSong by sharedViewModel.currentSong.collectAsState()
+    val settings by settingsViewModel.settings.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -46,7 +52,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
             composable(Screen.Library.route) {
-                LibraryScreen(navController = navController, viewModel = sharedViewModel)
+                LibraryScreen(
+                    navController = navController,
+                    viewModel = sharedViewModel,
+                    username = settings?.username ?: ""
+                )
             }
             composable(Screen.Import.route) {
                 ImportScreen(navController = navController)
@@ -81,6 +91,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     playlistId = playlistId,
                     libraryViewModel = sharedViewModel
                 )
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen(navController = navController, viewModel = settingsViewModel)
             }
         }
     }
