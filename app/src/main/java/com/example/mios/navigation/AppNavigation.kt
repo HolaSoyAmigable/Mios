@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.mios.ui.screens.CustomizeScreen
 import com.example.mios.ui.screens.GenreDetailScreen
 import com.example.mios.ui.screens.GenresScreen
 import com.example.mios.ui.screens.ImportScreen
@@ -94,6 +95,9 @@ fun AppNavigation(
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(navController = navController, viewModel = settingsViewModel)
+            }
+            composable(Screen.Customize.route) {
+                CustomizeScreen(navController = navController, viewModel = settingsViewModel)
             }
         }
     }

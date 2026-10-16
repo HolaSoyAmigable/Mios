@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.mios.navigation.Screen
 
 // Reemplazar por la pagina real del creador cuando exista
 private const val CREATOR_PAGE_URL = "https://github.com/HolaSoyAmigable/Mios"
@@ -78,7 +79,7 @@ fun SettingsScreen(navController: NavHostController, viewModel: SettingsViewMode
 
         ListItem(
             headlineContent = { Text("Personalizar") },
-            supportingContent = { Text("Próximamente") }
+            modifier = Modifier.clickable { navController.navigate(Screen.Customize.route) }
         )
         HorizontalDivider()
 

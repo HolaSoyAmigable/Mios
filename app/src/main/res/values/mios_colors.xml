@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mios_window_background">#0F0F14</color>
+    <color name="ic_bg_cyan">#006C84</color>
+    <color name="ic_bg_violet">#4527A0</color>
+    <color name="ic_bg_amber">#B26A00</color>
+</resources>

@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +20,9 @@ data class AppSettings(
     val username: String,
     val lockEnabled: Boolean,
     val pinHash: String?,
-    val pinSalt: String?
+    val pinSalt: String?,
+    val borderHue: Float?, // null = valor por defecto
+    val appHue: Float?     // null = valor por defecto
 )
 
 class SettingsRepository(context: Context) {
@@ -31,6 +34,8 @@ class SettingsRepository(context: Context) {
         val LOCK_ENABLED = booleanPreferencesKey("lock_enabled")
         val PIN_HASH = stringPreferencesKey("pin_hash")
         val PIN_SALT = stringPreferencesKey("pin_salt")
+        val BORDER_HUE = floatPreferencesKey("border_hue")
+        val APP_HUE = floatPreferencesKey("app_hue")
     }
 
     val settings: Flow<AppSettings> = dataStore.data
@@ -46,7 +51,9 @@ class SettingsRepository(context: Context) {
                 username = prefs[USERNAME] ?: "",
                 lockEnabled = enabled,
                 pinHash = hash,
-                pinSalt = salt
+                pinSalt = salt,
+                borderHue = prefs[BORDER_HUE],
+                appHue = prefs[APP_HUE]
             )
         }
 
@@ -67,6 +74,13 @@ class SettingsRepository(context: Context) {
             it[LOCK_ENABLED] = false
             it.remove(PIN_HASH)
             it.remove(PIN_SALT)
+        }
+    }
+
+    suspend fun saveTheme(borderHue: Float, appHue: Float) {
+        dataStore.edit {
+            it[BORDER_HUE] = borderHue
+            it[APP_HUE] = appHue
         }
     }
 }
